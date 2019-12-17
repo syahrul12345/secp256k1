@@ -3,6 +3,7 @@ package fieldelement
 import (
 	"fmt"
 	"math/big"
+	"strconv"
 
 	"github.com/bitherhq/go-bither/common/hexutil"
 )
@@ -24,9 +25,24 @@ type FieldElement struct {
 
 //NewFieldElement is a  constructor to create the fieldElement struct outside of the modesl pacakage
 func NewFieldElement(ridiculouslyLargeNumber string) FieldElement {
-	decodedNumber, decodeErr := hexutil.DecodeBig(ridiculouslyLargeNumber)
+	// This function only checks for the hex
+	_, alreadyHex := strconv.ParseUint(ridiculouslyLargeNumber, 16, 64)
+	if alreadyHex != nil {
+		decodedNumber, decodeErr := hexutil.DecodeBig(ridiculouslyLargeNumber)
+		if decodeErr != nil {
+			fmt.Println(decodeErr)
+		}
+		tempFieldElement := FieldElement{
+			decodedNumber,
+			n,
+		}
+
+		return tempFieldElement
+	}
+	str, _ := strconv.Atoi(ridiculouslyLargeNumber)
+	formattedNumber := strconv.FormatInt(int64(str), 16)
+	decodedNumber, decodeErr := hexutil.DecodeBig("0x" + formattedNumber)
 	if decodeErr != nil {
-		fmt.Println("errored")
 		fmt.Println(decodeErr)
 	}
 	tempFieldElement := FieldElement{
@@ -34,6 +50,43 @@ func NewFieldElement(ridiculouslyLargeNumber string) FieldElement {
 		n,
 	}
 	return tempFieldElement
+}
+
+//Creates a fieldElement for testing purposes
+func NewTestingFieldElement(ridiculouslyLargeNumber string, testPrime int64) FieldElement {
+	// This function only checks for the hex
+	ntest := big.NewInt(testPrime)
+	_, alreadyHex := strconv.ParseUint(ridiculouslyLargeNumber, 16, 64)
+	if alreadyHex != nil {
+		decodedNumber, decodeErr := hexutil.DecodeBig(ridiculouslyLargeNumber)
+		if decodeErr != nil {
+			fmt.Println(decodeErr)
+		}
+		tempFieldElement := FieldElement{
+			decodedNumber,
+			ntest,
+		}
+
+		return tempFieldElement
+	}
+	str, _ := strconv.Atoi(ridiculouslyLargeNumber)
+	formattedNumber := strconv.FormatInt(int64(str), 16)
+	decodedNumber, decodeErr := hexutil.DecodeBig("0x" + formattedNumber)
+	if decodeErr != nil {
+		fmt.Println(decodeErr)
+	}
+	tempFieldElement := FieldElement{
+		decodedNumber,
+		ntest,
+	}
+	return tempFieldElement
+}
+
+//Helper function to quickly convert if the int is in int and not hexadecimal
+func intToHexadecimal(integer string) string {
+	n, _ := strconv.ParseUint(integer, 16, 64)
+	coefficientString := strconv.Itoa(int(n))
+	return "0x" + coefficientString
 }
 
 //Equals check if the two fieldelements are equal
@@ -81,8 +134,7 @@ func (element1 FieldElement) Mul(element2 FieldElement) FieldElement {
 func (element1 FieldElement) Pow(exponent int) FieldElement {
 	exp := big.NewInt(int64(exponent))
 	one := big.NewInt(1)
-	primeLess := big.NewInt(element1.Prime.Int64())
-	primeLess.Sub(primeLess, one)
+	primeLess := big.NewInt(0).Sub(element1.Prime, one)
 	n := exp.Mod(exp, primeLess)
 	num := exp.Exp(element1.Number, n, element1.Prime)
 	return FieldElement{num, element1.Prime}
@@ -90,11 +142,10 @@ func (element1 FieldElement) Pow(exponent int) FieldElement {
 
 //Makes a point truely divisible
 func (element1 FieldElement) TrueDiv(element2 FieldElement) FieldElement {
+	var primeLess *big.Int
 	two := big.NewInt(2)
-	primeLess := big.NewInt(element1.Prime.Int64())
-	primeLess.Sub(primeLess, two)
+	primeLess = big.NewInt(0).Sub(element1.Prime, two)
 	divisor := big.NewInt(0).Exp(element2.Number, primeLess, element1.Prime)
 	num := big.NewInt(0).Mod(element1.Number.Mul(element1.Number, divisor), element1.Prime)
 	return FieldElement{num, element1.Prime}
-
 }
