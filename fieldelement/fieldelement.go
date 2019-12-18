@@ -2,6 +2,7 @@ package fieldelement
 
 import (
 	"fmt"
+	"math"
 	"math/big"
 	"strconv"
 
@@ -30,7 +31,8 @@ func NewFieldElement(ridiculouslyLargeNumber string) FieldElement {
 	if alreadyHex != nil {
 		decodedNumber, decodeErr := hexutil.DecodeBig(ridiculouslyLargeNumber)
 		if decodeErr != nil {
-			fmt.Println(decodeErr)
+			//Handles if it's a point at infinity
+			decodedNumber = big.NewInt(math.MaxInt64)
 		}
 		tempFieldElement := FieldElement{
 			decodedNumber,
@@ -60,7 +62,7 @@ func NewTestingFieldElement(ridiculouslyLargeNumber string, testPrime int64) Fie
 	if alreadyHex != nil {
 		decodedNumber, decodeErr := hexutil.DecodeBig(ridiculouslyLargeNumber)
 		if decodeErr != nil {
-			fmt.Println(decodeErr)
+			decodedNumber = big.NewInt(math.MaxInt64)
 		}
 		tempFieldElement := FieldElement{
 			decodedNumber,
@@ -79,6 +81,7 @@ func NewTestingFieldElement(ridiculouslyLargeNumber string, testPrime int64) Fie
 		decodedNumber,
 		ntest,
 	}
+
 	return tempFieldElement
 }
 
@@ -111,22 +114,34 @@ func (element1 FieldElement) NotEquals(element2 FieldElement) bool {
 
 //Add to fieldelements together
 func (element1 FieldElement) Add(element2 FieldElement) FieldElement {
-	sum := element1.Number.Add(element1.Number, element2.Number)
-	num := sum.Mod(sum, element1.Prime)
+	before := big.NewInt(0)
+	before.Set(element1.Number)
+	sum := before.Add(element1.Number, element2.Number)
+	after := big.NewInt(0)
+	after.Set(sum)
+	num := after.Mod(sum, element1.Prime)
 	return FieldElement{num, element1.Prime}
 }
 
 //Sub will subtract element2 from elemet1
 func (element1 FieldElement) Sub(element2 FieldElement) FieldElement {
-	sum := element1.Number.Sub(element1.Number, element2.Number)
-	num := sum.Mod(sum, element1.Prime)
+	before := big.NewInt(0)
+	before.Set(element1.Number)
+	sum := before.Sub(element1.Number, element2.Number)
+	after := big.NewInt(0)
+	after.Set(sum)
+	num := after.Mod(sum, element1.Prime)
 	return FieldElement{num, element1.Prime}
 }
 
 //Mul will subtract elememnt2 from element 1
 func (element1 FieldElement) Mul(element2 FieldElement) FieldElement {
-	sum := element1.Number.Mul(element1.Number, element2.Number)
-	num := sum.Mod(sum, element1.Prime)
+	before := big.NewInt(0)
+	before.Set(element1.Number)
+	sum := before.Mul(element1.Number, element2.Number)
+	after := big.NewInt(0)
+	after.Set(sum)
+	num := after.Mod(sum, element1.Prime)
 	return FieldElement{num, element1.Prime}
 }
 
