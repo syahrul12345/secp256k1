@@ -2,11 +2,10 @@ package curve
 
 import (
 	"fmt"
+	"github.com/bitherhq/go-bither/common/hexutil"
 	"math/big"
 	"secp256k1/fieldelement"
 	"strconv"
-
-	"github.com/bitherhq/go-bither/common/hexutil"
 )
 
 type Point struct {
@@ -114,7 +113,7 @@ func (point1 *Point) Mul(coefficient string) (*Point, error) {
 		point1.A,
 		point1.B,
 	}
-	for coeff.Int64() > 0 {
+	for coeff.Cmp(big.NewInt(0)) > 0 {
 		// keep adding to ther result if the rightmost bit is 1
 		if (coeff.Int64() & 1) == 1 {
 			result, _ = result.Add(current)
