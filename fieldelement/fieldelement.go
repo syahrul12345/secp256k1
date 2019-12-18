@@ -145,7 +145,8 @@ func (element1 FieldElement) Mul(element2 FieldElement) FieldElement {
 	return FieldElement{num, element1.Prime}
 }
 
-//Pow will exponnent the fieldl  e ment yegv power
+//Pow will exponnent the fieldl  e ment yegv power. Cannot handle negatives
+//This uses fermat's little theorem
 func (element1 FieldElement) Pow(exponent int) FieldElement {
 	exp := big.NewInt(int64(exponent))
 	one := big.NewInt(1)

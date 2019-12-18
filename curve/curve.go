@@ -9,7 +9,7 @@ import (
 	"github.com/bitherhq/go-bither/common/hexutil"
 )
 
-type point struct {
+type Point struct {
 	X *fieldelement.FieldElement
 	Y *fieldelement.FieldElement
 	A fieldelement.FieldElement
@@ -25,22 +25,12 @@ type errorMessage struct {
 	s string
 }
 
-type signature struct {
-	R *fieldelement.FieldElement
-	S *fieldelement.FieldElement
-}
-
-type privkey struct {
-	secret      string
-	secretPoint *point
-}
-
 func (e *errorMessage) Error() string {
 	return e.s
 }
 
 //NewPoint is a constructor function to create the new point
-func NewPoint(x string, y string) (*point, error) {
+func NewPoint(x string, y string) (*Point, error) {
 	feX := fieldelement.NewFieldElement(x)
 	feY := fieldelement.NewFieldElement(y)
 	feA := fieldelement.NewFieldElement(hexutil.EncodeUint64(0))
@@ -68,7 +58,7 @@ func NewPoint(x string, y string) (*point, error) {
 			&errorMessage{"The point doesnt exist on the curve"}
 	}
 
-	return &point{
+	return &Point{
 		&feX,
 		&feY,
 		feA,
@@ -78,7 +68,7 @@ func NewPoint(x string, y string) (*point, error) {
 
 //Helper Functions
 //Equals will check if point1 is equals to point 2
-func (point1 *point) Equals(point2 *point) bool {
+func (point1 *Point) Equals(point2 *Point) bool {
 	x1 := point1.X
 	y1 := point1.Y
 	a1 := point1.A
@@ -91,7 +81,7 @@ func (point1 *point) Equals(point2 *point) bool {
 }
 
 //NotEquals will check if point1 is not equals to point2
-func (point1 *point) NotEquals(point2 *point) bool {
+func (point1 *Point) NotEquals(point2 *Point) bool {
 	x1 := point1.X
 	y1 := point1.Y
 	a1 := point1.A
@@ -104,7 +94,7 @@ func (point1 *point) NotEquals(point2 *point) bool {
 }
 
 //Multiplies the a point with a coefficient
-func (point1 *point) Mul(coefficient string) (*point, error) {
+func (point1 *Point) Mul(coefficient string) (*Point, error) {
 	_, alreadyHex := strconv.ParseUint(coefficient, 16, 64)
 	var coeff big.Int
 	if alreadyHex != nil {
@@ -118,7 +108,7 @@ func (point1 *point) Mul(coefficient string) (*point, error) {
 
 	}
 	current := point1
-	result := &point{
+	result := &Point{
 		nil,
 		nil,
 		point1.A,
@@ -136,7 +126,7 @@ func (point1 *point) Mul(coefficient string) (*point, error) {
 }
 
 //Adds point1 to point2
-func (point1 *point) Add(point2 *point) (*point, error) {
+func (point1 *Point) Add(point2 *Point) (*Point, error) {
 	//Check if the points are on the same curve
 	a1 := point1.A
 	b1 := point1.B
@@ -159,7 +149,7 @@ func (point1 *point) Add(point2 *point) (*point, error) {
 	}
 	// Case 1: Point @ Infinity. X is equals, but Y different. Vertical line.
 	if x1.Equals(*x2) && y1.NotEquals(*y2) {
-		return &point{
+		return &Point{
 			nil,
 			nil,
 			a1,
@@ -173,7 +163,7 @@ func (point1 *point) Add(point2 *point) (*point, error) {
 		s := numerator.TrueDiv(denominator)
 		x3 := s.Pow(2).Sub(*x1).Sub(*x2)
 		y3 := s.Mul(x1.Sub(x3)).Sub(*y1)
-		return &point{
+		return &Point{
 			&x3,
 			&y3,
 			a1,
@@ -183,7 +173,7 @@ func (point1 *point) Add(point2 *point) (*point, error) {
 	//Case 3: The tangent of the point forms avertical line
 	if point1.Equals(point2) && point1.Y.Equals(point1.X.Mul(fieldelement.NewFieldElement(hexutil.EncodeUint64(0)))) {
 		fmt.Println("case 3")
-		return &point{
+		return &Point{
 			nil,
 			nil,
 			a1,
@@ -195,7 +185,7 @@ func (point1 *point) Add(point2 *point) (*point, error) {
 		s := x1.Pow(2).Add(x1.Pow(2).Add(x1.Pow(2))).Add(a1).TrueDiv(y1.Add(*y1))
 		x3 := s.Pow(2).Sub(x1.Add(*x1))
 		y3 := s.Mul(x1.Sub(x3)).Sub(*y1)
-		return &point{
+		return &Point{
 			&x3,
 			&y3,
 			a1,
@@ -204,38 +194,4 @@ func (point1 *point) Add(point2 *point) (*point, error) {
 	}
 
 	return nil, nil
-}
-
-func (point *point) Verify(zs string, sig *signature) {
-	sInv := sig.S.Pow(-1)
-	z := fieldelement.NewFieldElement(zs)
-	u := z.Mul(sInv)
-	v := sig.R.Mul(sInv)
-	G, _ := NewPoint("0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798", "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8")
-	first, _ := G.Mul(hexutil.EncodeBig(u.Number))
-	fmt.Println(first)
-	second, _ := point.Mul(hexutil.EncodeBig(v.Number))
-	fmt.Println(second)
-	// total, _ := first.Add(second)
-	// print(total.X.Number)
-
-}
-
-//NewSignature creats a new signature object which stores the required variables
-func NewSignature(R string, S string) *signature {
-	r := fieldelement.NewFieldElement(R)
-	s := fieldelement.NewFieldElement(S)
-	return &signature{
-		&r,
-		&s,
-	}
-}
-
-func NewPrivateKey(secret string) *privkey {
-	G, _ := NewPoint("0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798", "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8")
-	secretPoint, _ := G.Mul(secret)
-	return &privkey{
-		secret,
-		secretPoint,
-	}
 }
