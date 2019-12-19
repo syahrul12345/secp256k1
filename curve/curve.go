@@ -30,36 +30,46 @@ func (e *errorMessage) Error() string {
 
 //NewPoint is a constructor function to create the new point
 func NewPoint(x string, y string) (*Point, error) {
-	feX := fieldelement.NewFieldElement(x)
-	feY := fieldelement.NewFieldElement(y)
+
+	var feX *fieldelement.FieldElement
+	var feY *fieldelement.FieldElement
 	feA := fieldelement.NewFieldElement(hexutil.EncodeUint64(0))
 	feB := fieldelement.NewFieldElement(hexutil.EncodeUint64(7))
-	// Check if point exists on the curve
-	onCurve := func(
-		x fieldelement.FieldElement,
-		y fieldelement.FieldElement,
-		a fieldelement.FieldElement,
-		b fieldelement.FieldElement) bool {
-		left := y.Pow(2)
-		r1 := x.Pow(3)
-		r2 := x.Mul(a)
-		r3 := b
-		r4 := r1.Add(r2)
-		right := r4.Add(r3)
-		return left.Equals(right)
-	}(fieldelement.NewFieldElement(x),
-		fieldelement.NewFieldElement(y),
-		fieldelement.NewFieldElement(hexutil.EncodeUint64(0)),
-		fieldelement.NewFieldElement(hexutil.EncodeUint64(7)))
-
-	if onCurve == false {
-		return nil,
-			&errorMessage{"The point doesnt exist on the curve"}
+	if x == "nil" {
+		feX = nil
 	}
-
+	if y == "nil" {
+		feY = nil
+	} else {
+		feXVal := fieldelement.NewFieldElement(x)
+		feYVal := fieldelement.NewFieldElement(y)
+		feX = &feXVal
+		feY = &feYVal
+		// Check if point exists on the curve. SKip if the X or y == nil
+		onCurve := func(
+			x fieldelement.FieldElement,
+			y fieldelement.FieldElement,
+			a fieldelement.FieldElement,
+			b fieldelement.FieldElement) bool {
+			left := y.Pow("2")
+			r1 := x.Pow("3")
+			r2 := x.Mul(a)
+			r3 := b
+			r4 := r1.Add(r2)
+			right := r4.Add(r3)
+			return left.Equals(right)
+		}(fieldelement.NewFieldElement(x),
+			fieldelement.NewFieldElement(y),
+			fieldelement.NewFieldElement(hexutil.EncodeUint64(0)),
+			fieldelement.NewFieldElement(hexutil.EncodeUint64(7)))
+		if onCurve == false {
+			return nil,
+				&errorMessage{"The point doesnt exist on the curve"}
+		}
+	}
 	return &Point{
-		&feX,
-		&feY,
+		feX,
+		feY,
 		feA,
 		feB,
 	}, nil
@@ -76,6 +86,12 @@ func (point1 *Point) Equals(point2 *Point) bool {
 	y2 := point2.Y
 	a2 := point2.A
 	b2 := point2.B
+	if x1 == nil || x2 == nil || y1 == nil || y2 == nil {
+		if x1 == x2 && y1 == y2 {
+			return true
+		}
+		return false
+	}
 	return x1.Equals(*x2) && y1.Equals(*y2) && a1.Equals(a2) && b1.Equals(b2)
 }
 
@@ -89,6 +105,12 @@ func (point1 *Point) NotEquals(point2 *Point) bool {
 	y2 := point2.Y
 	a2 := point2.A
 	b2 := point2.B
+	if x1 == nil || x2 == nil || y1 == nil || y2 == nil {
+		if x1 == x2 && y1 == y2 {
+			return false
+		}
+		return true
+	}
 	return x1.NotEquals(*x2) || y1.NotEquals(*y2) || a1.NotEquals(a2) || b1.NotEquals(b2)
 }
 
@@ -160,7 +182,7 @@ func (point1 *Point) Add(point2 *Point) (*Point, error) {
 		numerator := y1.Sub(*y2)
 		denominator := x1.Sub(*x2)
 		s := numerator.TrueDiv(denominator)
-		x3 := s.Pow(2).Sub(*x1).Sub(*x2)
+		x3 := s.Pow("2").Sub(*x1).Sub(*x2)
 		y3 := s.Mul(x1.Sub(x3)).Sub(*y1)
 		return &Point{
 			&x3,
@@ -171,7 +193,6 @@ func (point1 *Point) Add(point2 *Point) (*Point, error) {
 	}
 	//Case 3: The tangent of the point forms avertical line
 	if point1.Equals(point2) && point1.Y.Equals(point1.X.Mul(fieldelement.NewFieldElement(hexutil.EncodeUint64(0)))) {
-		fmt.Println("case 3")
 		return &Point{
 			nil,
 			nil,
@@ -181,8 +202,8 @@ func (point1 *Point) Add(point2 *Point) (*Point, error) {
 	}
 	//Case 4: The two points are exactly the same!
 	if point1.Equals(point2) {
-		s := x1.Pow(2).Add(x1.Pow(2).Add(x1.Pow(2))).Add(a1).TrueDiv(y1.Add(*y1))
-		x3 := s.Pow(2).Sub(x1.Add(*x1))
+		s := x1.Pow("2").Add(x1.Pow("2").Add(x1.Pow("2"))).Add(a1).TrueDiv(y1.Add(*y1))
+		x3 := s.Pow("2").Sub(x1.Add(*x1))
 		y3 := s.Mul(x1.Sub(x3)).Sub(*y1)
 		return &Point{
 			&x3,

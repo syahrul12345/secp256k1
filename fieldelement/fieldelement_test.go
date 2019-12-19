@@ -98,7 +98,7 @@ func TestMul(t *testing.T) {
 
 func TestPow(t *testing.T) {
 	a := NewTestingFieldElement("17", 31)
-	result1 := a.Pow(3)
+	result1 := a.Pow("3")
 	expected1 := NewTestingFieldElement("15", 31)
 	first := result1.Equals(expected1)
 	if !first {
@@ -106,13 +106,13 @@ func TestPow(t *testing.T) {
 	}
 	b := NewTestingFieldElement("5", 31)
 	c := NewTestingFieldElement("18", 31)
-	result2 := b.Pow(5).Mul(c)
+	result2 := b.Pow("5").Mul(c)
 	expected2 := NewTestingFieldElement("16", 31)
 	second := result2.Equals(expected2)
 	if !second {
 		t.Errorf("Field element exponent of FieldElement(5) by Exponent 5, followed by Multiplication with FieldElement(18) gave FieldElement(%s),want FieldElement(16)", result2.Number)
 	}
-	result3 := a.Pow(-3)
+	result3 := a.Pow("-3")
 	expected3 := NewTestingFieldElement("29", 31)
 	third := result3.Equals(expected3)
 	if !third {
@@ -130,7 +130,7 @@ func TestDiv(t *testing.T) {
 		t.Errorf("Field element divition of FieldElement(3)/FieldElement(24) gave FieldElement(%s), want FieldElement(4) ", result1.Number)
 	}
 	a = NewTestingFieldElement("17", 31)
-	result2 := a.Pow(-3)
+	result2 := a.Pow("-3")
 	expected2 := NewTestingFieldElement("29", 31)
 	second := result2.Equals(expected2)
 	if !second {
@@ -138,7 +138,8 @@ func TestDiv(t *testing.T) {
 	}
 	c := NewTestingFieldElement("4", 31)
 	d := NewTestingFieldElement("11", 31)
-	result3 := c.Pow(-4).Mul(d)
+	result3 := c.Pow("-4").Mul(d)
+
 	expected3 := NewTestingFieldElement("13", 31)
 	third := result3.Equals(expected3)
 	if !third {

@@ -3,9 +3,11 @@ package utils
 import (
 	"crypto/rand"
 	"math/big"
+
+	"github.com/bitherhq/go-bither/common/hexutil"
 )
 
-//Creates a determinitic number
+//GenerateSecret will create  a deterministic number
 func GenerateSecret() string {
 	//Max random value, a 130-bits integer, i.e 2^130 - 1
 	max := new(big.Int)
@@ -19,4 +21,29 @@ func GenerateSecret() string {
 	//String representation of n in base 16
 	return n.Text(16)
 
+}
+
+//ToBigInt Converts a string to the corresponding big.Int
+func ToBigInt(ridiculouslyLargeNumber string) *big.Int {
+	var decodedNumber *big.Int
+	// First handle nil values
+	if ridiculouslyLargeNumber == "nil" {
+		return nil
+	}
+	// Check for length, if more than 3, it's definately a hex
+	if len(ridiculouslyLargeNumber) >= 3 {
+		hexCheck := ridiculouslyLargeNumber[0:2]
+		isHex := (hexCheck == "0x")
+		if isHex {
+			decodedNumber, _ = hexutil.DecodeBig(ridiculouslyLargeNumber)
+		} else {
+			decodedNumber, _ = big.NewInt(0).SetString(ridiculouslyLargeNumber, 10)
+		}
+	} else {
+		// Not a hex, so we can set the string
+		decodedNumber, _ = big.NewInt(0).SetString(ridiculouslyLargeNumber, 10)
+
+	}
+
+	return decodedNumber
 }

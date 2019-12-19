@@ -5,6 +5,7 @@ import (
 	"math/big"
 	"secp256k1/curve"
 	"secp256k1/fieldelement"
+	"secp256k1/utils"
 	"strconv"
 
 	"github.com/bitherhq/go-bither/common/hexutil"
@@ -44,26 +45,26 @@ func New256Point(x string, y string) *Point256 {
 	}
 }
 
+//Converts a normal Point to a Point256
+func NormalTo256(point *curve.Point) *Point256 {
+	return &Point256{
+		point.X,
+		point.Y,
+		point.A,
+		point.B,
+	}
+}
+
 //Mul will multiply point256 with a coefficient
 func (point256 *Point256) Mul(coefficient string) (*curve.Point, error) {
 	// Check if the coefifcinent is already hexed
-	_, alreadyHex := strconv.ParseInt(coefficient, 16, 64)
-	var coeff *big.Int
-	if alreadyHex != nil {
-		tempCoeff, _ := hexutil.DecodeBig(coefficient)
-		coeff = tempCoeff
-	} else {
-		coefficientInterger, _ := strconv.Atoi(coefficient)
-		hexString := fmt.Sprintf("%x", coefficientInterger)
-		tempCoeff, _ := hexutil.DecodeBig("0x" + hexString)
-		coeff = tempCoeff
-	}
-
+	coeff := utils.ToBigInt(coefficient)
 	modoBig, err := hexutil.DecodeBig(Order)
 	if err != nil {
 		return nil, nil
 	}
 	//Sets the new coefficient
+
 	coeff.Mod(coeff, modoBig)
 	coeffString := hexutil.EncodeBig(coeff)
 	// We create a normal point that can do the multiplacaiton
@@ -116,4 +117,61 @@ func (point256 *Point256) Verify(message string, sig *Signature) bool {
 		return true
 	}
 	return false
+}
+
+//SEC will create the serialized public key for propogation
+//Takes a boolean paramenter to determine if the output is compressed or not
+func (point256 *Point256) SEC(compressed bool) string {
+	if compressed {
+		x := big.NewInt(0).Mod(point256.X.Number, big.NewInt(2))
+		xBytes := new(big.Int).SetBytes(point256.X.Number.Bytes())
+		text := xBytes.Text(16)
+		if x.Cmp(big.NewInt(0)) == 0 {
+			return "02" + text
+		}
+		return "03" + text
+	}
+	xBytes := new(big.Int).SetBytes(point256.X.Number.Bytes())
+	yBytes := new(big.Int).SetBytes(point256.Y.Number.Bytes())
+	textX := xBytes.Text(16)
+	textY := yBytes.Text(16)
+	return "04" + textX + textY
+}
+
+//ParseBin will discover the public key given a SEC_BIN
+func ParseBin(secBin string) *Point256 {
+	// Check if it's compressed or not
+	flag, _ := strconv.ParseInt(secBin[1:2], 10, 64)
+	if flag == 4 {
+		xHalf := secBin[2:66]
+		yHalf := secBin[66:]
+		return New256Point("0x"+xHalf, "0x"+yHalf)
+	}
+	xHalf := secBin[2:]
+	xHex := "0x" + xHalf
+	// Create the required fields
+	xField := fieldelement.NewFieldElement(xHex)
+	alpha := xField.Pow("3").Add(fieldelement.NewFieldElement("7"))
+	beta := alpha.Sqrt()
+	//Check if 0 == beta % 2 and check if it's 0 a
+	//Double check 0 as the big library returns a 0
+	var evenBeta fieldelement.FieldElement
+	var oddBeta fieldelement.FieldElement
+	var input *big.Int
+	input = big.NewInt(0).Sub(beta.Prime, beta.Number)
+	if big.NewInt(0).Cmp(big.NewInt(0).Mod(beta.Number, big.NewInt(2))) == 0 {
+		evenBeta = beta
+		oddBeta = fieldelement.NewFieldElement(input.Text(10))
+	} else {
+		evenBeta = fieldelement.NewFieldElement(input.Text(10))
+		oddBeta = beta
+
+	}
+	//even
+	if flag == 2 {
+		return New256Point(xHex, evenBeta.Number.Text(10))
+	} else {
+		return New256Point(xHex, oddBeta.Number.Text(10))
+	}
+
 }

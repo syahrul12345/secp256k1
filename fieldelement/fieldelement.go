@@ -1,12 +1,9 @@
 package fieldelement
 
 import (
-	"fmt"
-	"math"
 	"math/big"
+	"secp256k1/utils"
 	"strconv"
-
-	"github.com/bitherhq/go-bither/common/hexutil"
 )
 
 //These are the fixed values
@@ -26,27 +23,7 @@ type FieldElement struct {
 
 //NewFieldElement is a  constructor to create the fieldElement struct outside of the modesl pacakage
 func NewFieldElement(ridiculouslyLargeNumber string) FieldElement {
-	// This function only checks for the hex
-	_, alreadyHex := strconv.ParseUint(ridiculouslyLargeNumber, 16, 64)
-	if alreadyHex != nil {
-		decodedNumber, decodeErr := hexutil.DecodeBig(ridiculouslyLargeNumber)
-		if decodeErr != nil {
-			//Handles if it's a point at infinity
-			decodedNumber = big.NewInt(math.MaxInt64)
-		}
-		tempFieldElement := FieldElement{
-			decodedNumber,
-			n,
-		}
-
-		return tempFieldElement
-	}
-	str, _ := strconv.Atoi(ridiculouslyLargeNumber)
-	formattedNumber := strconv.FormatInt(int64(str), 16)
-	decodedNumber, decodeErr := hexutil.DecodeBig("0x" + formattedNumber)
-	if decodeErr != nil {
-		fmt.Println(decodeErr)
-	}
+	decodedNumber := utils.ToBigInt(ridiculouslyLargeNumber)
 	tempFieldElement := FieldElement{
 		decodedNumber,
 		n,
@@ -54,34 +31,13 @@ func NewFieldElement(ridiculouslyLargeNumber string) FieldElement {
 	return tempFieldElement
 }
 
-//Creates a fieldElement for testing purposes
+//NewTestingFieldElement creats a field element specifically for testing
 func NewTestingFieldElement(ridiculouslyLargeNumber string, testPrime int64) FieldElement {
-	// This function only checks for the hex
-	ntest := big.NewInt(testPrime)
-	_, alreadyHex := strconv.ParseUint(ridiculouslyLargeNumber, 16, 64)
-	if alreadyHex != nil {
-		decodedNumber, decodeErr := hexutil.DecodeBig(ridiculouslyLargeNumber)
-		if decodeErr != nil {
-			decodedNumber = big.NewInt(math.MaxInt64)
-		}
-		tempFieldElement := FieldElement{
-			decodedNumber,
-			ntest,
-		}
-
-		return tempFieldElement
-	}
-	str, _ := strconv.Atoi(ridiculouslyLargeNumber)
-	formattedNumber := strconv.FormatInt(int64(str), 16)
-	decodedNumber, decodeErr := hexutil.DecodeBig("0x" + formattedNumber)
-	if decodeErr != nil {
-		fmt.Println(decodeErr)
-	}
+	decodedNumber := utils.ToBigInt(ridiculouslyLargeNumber)
 	tempFieldElement := FieldElement{
 		decodedNumber,
-		ntest,
+		big.NewInt(testPrime),
 	}
-
 	return tempFieldElement
 }
 
@@ -114,6 +70,9 @@ func (element1 FieldElement) NotEquals(element2 FieldElement) bool {
 
 //Add to fieldelements together
 func (element1 FieldElement) Add(element2 FieldElement) FieldElement {
+	if element1.Number == nil {
+		return element1
+	}
 	before := big.NewInt(0)
 	before.Set(element1.Number)
 	sum := before.Add(element1.Number, element2.Number)
@@ -125,6 +84,9 @@ func (element1 FieldElement) Add(element2 FieldElement) FieldElement {
 
 //Sub will subtract element2 from elemet1
 func (element1 FieldElement) Sub(element2 FieldElement) FieldElement {
+	if element1.Number == nil {
+		return element1
+	}
 	before := big.NewInt(0)
 	before.Set(element1.Number)
 	sum := before.Sub(element1.Number, element2.Number)
@@ -136,6 +98,9 @@ func (element1 FieldElement) Sub(element2 FieldElement) FieldElement {
 
 //Mul will subtract elememnt2 from element 1
 func (element1 FieldElement) Mul(element2 FieldElement) FieldElement {
+	if element1.Number == nil {
+		return element1
+	}
 	before := big.NewInt(0)
 	before.Set(element1.Number)
 	sum := before.Mul(element1.Number, element2.Number)
@@ -145,10 +110,14 @@ func (element1 FieldElement) Mul(element2 FieldElement) FieldElement {
 	return FieldElement{num, element1.Prime}
 }
 
-//Pow will exponnent the fieldl  e ment yegv power. Cannot handle negatives
+//Pow will apply the power to the fieldelement Cannot handle negatives
 //This uses fermat's little theorem
-func (element1 FieldElement) Pow(exponent int) FieldElement {
-	exp := big.NewInt(int64(exponent))
+func (element1 FieldElement) Pow(ridiculouslyLargeNumber string) FieldElement {
+	if element1.Number == nil {
+		return element1
+	}
+	//First check if it's a valid hex: check for 0x
+	exp := utils.ToBigInt(ridiculouslyLargeNumber)
 	one := big.NewInt(1)
 	primeLess := big.NewInt(0).Sub(element1.Prime, one)
 	n := exp.Mod(exp, primeLess)
@@ -156,7 +125,7 @@ func (element1 FieldElement) Pow(exponent int) FieldElement {
 	return FieldElement{num, element1.Prime}
 }
 
-//Makes a point truely divisible
+//TrueDiv Makes a point truely divisible
 func (element1 FieldElement) TrueDiv(element2 FieldElement) FieldElement {
 	var primeLess *big.Int
 	two := big.NewInt(2)
@@ -164,4 +133,12 @@ func (element1 FieldElement) TrueDiv(element2 FieldElement) FieldElement {
 	divisor := big.NewInt(0).Exp(element2.Number, primeLess, element1.Prime)
 	num := big.NewInt(0).Mod(element1.Number.Mul(element1.Number, divisor), element1.Prime)
 	return FieldElement{num, element1.Prime}
+}
+
+//Sqrt will squareroot truediv
+func (element1 FieldElement) Sqrt() FieldElement {
+	power := big.NewInt(0).Div(big.NewInt(0).Add(n, big.NewInt(1)), big.NewInt(4))
+
+	//Thus loops infinitely... needs ot be researched
+	return element1.Pow(power.String())
 }

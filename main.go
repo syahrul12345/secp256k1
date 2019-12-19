@@ -7,15 +7,19 @@ import (
 )
 
 func main() {
-	//Create a new private key
+	// Create a new private key
 	privKey := creepto.CreateNewPrivateKey()
 	//Generate the pubKey from privateKey
 	pubKey := privKey.PublicKey
 	signature, message := privKey.Sign("hello world213124234123123")
 	//Verifying signature
-	res := pubKey.Verify(message, signature)
+	pubKey.Verify(message, signature)
 	//This will give true
-	fmt.Println(res)
+	secPub := pubKey.SEC(true)
+	fmt.Println(len(secPub))
+	secPub = pubKey.SEC(false)
+	fmt.Println(len(secPub))
+	fmt.Println("---------------------------------------------------------------------------")
 }
 
 func intToHexadecimal(integer string) string {
