@@ -43,7 +43,7 @@ func New256Point(x string, y string) *Point256 {
 	}
 }
 
-//Converts a normal Point to a Point256
+//NormalTo256 will convert the given point to a Point256 type
 func NormalTo256(point *curve.Point) *Point256 {
 	return &Point256{
 		point.X,
@@ -168,8 +168,6 @@ func ParseBin(secBin string) *Point256 {
 	//even
 	if flag == 2 {
 		return New256Point(xHex, evenBeta.Number.Text(10))
-	} else {
-		return New256Point(xHex, oddBeta.Number.Text(10))
 	}
-
+	return New256Point(xHex, oddBeta.Number.Text(10))
 }
