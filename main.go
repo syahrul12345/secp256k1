@@ -11,9 +11,10 @@ func main() {
 	privKey := creepto.CreateNewPrivateKey()
 	//Generate the pubKey from privateKey
 	pubKey := privKey.PublicKey
-	signature, message := privKey.Sign("hello world213124234123123")
+	signature, message := privKey.Sign("hello wo123213123rld213124234123123")
 	//Verifying signature
-	pubKey.Verify(message, signature)
+	status := pubKey.Verify(message, signature)
+	fmt.Println(status)
 	//This will give true
 	secPub := pubKey.SEC(true)
 	fmt.Println(secPub)

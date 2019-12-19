@@ -7,8 +7,6 @@ import (
 	"secp256k1/fieldelement"
 	"secp256k1/utils"
 	"strconv"
-
-	"github.com/bitherhq/go-bither/common/hexutil"
 )
 
 const (
@@ -59,19 +57,19 @@ func NormalTo256(point *curve.Point) *Point256 {
 func (point256 *Point256) Mul(coefficient string) (*curve.Point, error) {
 	// Check if the coefifcinent is already hexed
 	coeff := utils.ToBigInt(coefficient)
-	modoBig, err := hexutil.DecodeBig(Order)
-	if err != nil {
+	modoBig, ok := big.NewInt(0).SetString(Order[2:], 16)
+	if !ok {
 		return nil, nil
 	}
 	//Sets the new coefficient
 
 	coeff.Mod(coeff, modoBig)
-	coeffString := hexutil.EncodeBig(coeff)
+	coeffString := "0x" + coeff.Text(16)
 	// We create a normal point that can do the multiplacaiton
 	x := point256.X.Number
 	y := point256.Y.Number
 	//Skip error handling, it will definately be on the line
-	tempPoint, _ := curve.NewPoint(hexutil.EncodeBig(x), hexutil.EncodeBig(y))
+	tempPoint, _ := curve.NewPoint("0x"+x.Text(16), "0x"+y.Text(16))
 	result, _ := tempPoint.Mul(coeffString)
 
 	//Return and reconvert it to  a point256
@@ -88,11 +86,11 @@ func NewSignature(r string, s string) *Signature {
 
 //Verify This function will verify if the Public Key has sent the message z, with enclosed signature
 func (point256 *Point256) Verify(message string, sig *Signature) bool {
-	z, _ := hexutil.DecodeBig(message)
-	r, _ := hexutil.DecodeBig(sig.R)
-	s, _ := hexutil.DecodeBig(sig.S)
+	z := utils.ToBigInt(message)
+	r := utils.ToBigInt(sig.R)
+	s := utils.ToBigInt(sig.S)
 
-	bigOrder, _ := hexutil.DecodeBig(Order)
+	bigOrder := utils.ToBigInt(Order)
 	newOrder := big.NewInt(0).Sub(bigOrder, big.NewInt(2))
 	sInv := big.NewInt(0).Exp(s, newOrder, bigOrder)
 	//u = z/s
@@ -105,8 +103,8 @@ func (point256 *Point256) Verify(message string, sig *Signature) bool {
 	//Create G
 	G, _ := curve.NewPoint("0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798", "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8")
 
-	firstTerm, _ := G.Mul(hexutil.EncodeBig(u))
-	secondTerm, _ := point256.Mul(hexutil.EncodeBig(v))
+	firstTerm, _ := G.Mul("0x" + u.Text(16))
+	secondTerm, _ := point256.Mul("0x" + v.Text(16))
 	R, err := firstTerm.Add(secondTerm)
 	if err != nil {
 		fmt.Println(err)

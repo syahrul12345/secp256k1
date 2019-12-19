@@ -3,8 +3,6 @@ package utils
 import (
 	"crypto/rand"
 	"math/big"
-
-	"github.com/bitherhq/go-bither/common/hexutil"
 )
 
 //GenerateSecret will create  a deterministic number
@@ -35,7 +33,8 @@ func ToBigInt(ridiculouslyLargeNumber string) *big.Int {
 		hexCheck := ridiculouslyLargeNumber[0:2]
 		isHex := (hexCheck == "0x")
 		if isHex {
-			decodedNumber, _ = hexutil.DecodeBig(ridiculouslyLargeNumber)
+			//Remove the 0x prefix
+			decodedNumber, _ = big.NewInt(0).SetString(ridiculouslyLargeNumber[2:], 16)
 		} else {
 			decodedNumber, _ = big.NewInt(0).SetString(ridiculouslyLargeNumber, 10)
 		}
@@ -46,4 +45,9 @@ func ToBigInt(ridiculouslyLargeNumber string) *big.Int {
 	}
 
 	return decodedNumber
+}
+
+//FromBigInt will return the 0x encoded of the provided bigInt
+func FromBigInt(bigInt *big.Int) string {
+	return "0x" + bigInt.Text(16)
 }
