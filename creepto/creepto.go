@@ -22,12 +22,6 @@ type Point256 struct {
 	B fieldelement.FieldElement
 }
 
-//Signature represents a string
-type Signature struct {
-	R string
-	S string
-}
-
 //New256Point creates a Point256 representing a public key
 func New256Point(x string, y string) *Point256 {
 	newPoint, pointError := curve.NewPoint(x, y)
@@ -74,14 +68,6 @@ func (point256 *Point256) Mul(coefficient string) (*curve.Point, error) {
 
 	//Return and reconvert it to  a point256
 	return result, nil
-}
-
-//NewSignature will create a new Signature
-func NewSignature(r string, s string) *Signature {
-	return &Signature{
-		r,
-		s,
-	}
 }
 
 //Verify This function will verify if the Public Key has sent the message z, with enclosed signature
