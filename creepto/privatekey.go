@@ -24,8 +24,9 @@ func CreateNewPrivateKey() PrivateKey {
 	//Generate a random secret
 	G, _ := curve.NewPoint("0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798", "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8")
 	//In production we generate a deterministic number
+	//Create a hex of the secret
 	secret := utils.GenerateSecret()
-	secretBig, _ := hexutil.DecodeBig("0x" + secret)
+	secretBig, _ := big.NewInt(0).SetString(secret, 16)
 	pubKey, _ := G.Mul(hexutil.EncodeBig(secretBig))
 	pubKey256 := New256Point(hexutil.EncodeBig(pubKey.X.Number), hexutil.EncodeBig(pubKey.Y.Number))
 	return PrivateKey{

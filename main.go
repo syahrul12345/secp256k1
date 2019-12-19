@@ -16,9 +16,9 @@ func main() {
 	pubKey.Verify(message, signature)
 	//This will give true
 	secPub := pubKey.SEC(true)
-	fmt.Println(len(secPub))
+	fmt.Println(secPub)
 	secPub = pubKey.SEC(false)
-	fmt.Println(len(secPub))
+	fmt.Println(secPub)
 	fmt.Println("---------------------------------------------------------------------------")
 }
 
