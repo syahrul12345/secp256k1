@@ -2,12 +2,13 @@ package creepto
 
 import (
 	"fmt"
+	"math/big"
 )
 
 //Signature represents a string
 type Signature struct {
-	R string
-	S string
+	R *big.Int
+	S *big.Int
 }
 
 //NewSignature will create a new Signature

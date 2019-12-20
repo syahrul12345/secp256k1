@@ -2,6 +2,10 @@ package utils
 
 import (
 	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
+	"github.com/btcsuite/btcutil/base58"
+	"golang.org/x/crypto/ripemd160"
 	"math/big"
 )
 
@@ -50,4 +54,38 @@ func ToBigInt(ridiculouslyLargeNumber string) *big.Int {
 //FromBigInt will return the 0x encoded of the provided bigInt
 func FromBigInt(bigInt *big.Int) string {
 	return "0x" + bigInt.Text(16)
+}
+
+//Encode58 will convert hexadecimal strings to base58
+func Encode58(str string) string {
+	hexBytes, _ := hex.DecodeString(str)
+	encoded := base58.Encode(hexBytes)
+	return encoded
+
+}
+
+//Encode58CheckSum will include the checksum to a base58 encoded string
+func Encode58CheckSum(str string) string {
+	hexBytes, _ := hex.DecodeString(str)
+	checksum := sha256.Sum256(hexBytes)
+	first4 := checksum[0:4]
+	first4HexString := hex.EncodeToString(first4)
+	return Encode58(str + first4HexString)
+}
+
+//Hash160 utility will take the SEC address format, applies a sha256 then ripemd160
+func Hash160(sec string) string {
+	hexBytes, _ := hex.DecodeString(sec)
+	hash256 := sha256.Sum256(hexBytes)
+	ripemdHasher := ripemd160.New()
+	ripemdHasher.Write(hash256)
+	hashBytes := ripemdHasher.Sum(nil)
+	hashString := fmt.Sprintf("%x", hashBytes)
+	return hashString
+}
+
+func divmod(numerator, denominator uint64) (quotient, remainder uint64) {
+	quotient = numerator / denominator // integer division, decimals are truncated
+	remainder = numerator % denominator
+	return
 }

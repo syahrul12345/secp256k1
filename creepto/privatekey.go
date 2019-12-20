@@ -74,8 +74,8 @@ func (privKey PrivateKey) Sign(message string) (*Signature, string) {
 		s = big.NewInt(0).Sub(bigOrder, s)
 	}
 	return &Signature{
-		utils.FromBigInt(R.X.Number),
-		utils.FromBigInt(s),
+		R.X.Number,
+		s,
 	}, "0x" + z
 
 }

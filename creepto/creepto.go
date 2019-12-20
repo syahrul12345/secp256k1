@@ -73,8 +73,8 @@ func (point256 *Point256) Mul(coefficient string) (*curve.Point, error) {
 //Verify This function will verify if the Public Key has sent the message z, with enclosed signature
 func (point256 *Point256) Verify(message string, sig *Signature) bool {
 	z := utils.ToBigInt(message)
-	r := utils.ToBigInt(sig.R)
-	s := utils.ToBigInt(sig.S)
+	r := sig.R
+	s := sig.S
 
 	bigOrder := utils.ToBigInt(Order)
 	newOrder := big.NewInt(0).Sub(bigOrder, big.NewInt(2))
