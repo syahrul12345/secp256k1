@@ -6,7 +6,6 @@ import (
 	"secp256k1/curve"
 	"secp256k1/fieldelement"
 	"secp256k1/utils"
-	"strconv"
 )
 
 const (
@@ -122,38 +121,13 @@ func (point256 *Point256) SEC(compressed bool) string {
 	return "04" + textX + textY
 }
 
-//ParseBin will discover the public key given a SEC_BIN
-func ParseBin(secBin string) *Point256 {
-	// Check if it's compressed or not
-	flag, _ := strconv.ParseInt(secBin[1:2], 10, 64)
-	if flag == 4 {
-		xHalf := secBin[2:66]
-		yHalf := secBin[66:]
-		return New256Point("0x"+xHalf, "0x"+yHalf)
-	}
-	xHalf := secBin[2:]
-	xHex := "0x" + xHalf
-	// Create the required fields
-	xField := fieldelement.NewFieldElement(xHex)
-	alpha := xField.Pow("3").Add(fieldelement.NewFieldElement("7"))
-	beta := alpha.Sqrt()
-	//Check if 0 == beta % 2 and check if it's 0 a
-	//Double check 0 as the big library returns a 0
-	var evenBeta fieldelement.FieldElement
-	var oddBeta fieldelement.FieldElement
-	var input *big.Int
-	input = big.NewInt(0).Sub(beta.Prime, beta.Number)
-	if big.NewInt(0).Cmp(big.NewInt(0).Mod(beta.Number, big.NewInt(2))) == 0 {
-		evenBeta = beta
-		oddBeta = fieldelement.NewFieldElement(input.Text(10))
-	} else {
-		evenBeta = fieldelement.NewFieldElement(input.Text(10))
-		oddBeta = beta
+func (point256 *Point256) hash160(compressed bool) string {
+	return utils.Hash160(point256.SEC(compressed))
+}
 
-	}
-	//even
-	if flag == 2 {
-		return New256Point(xHex, evenBeta.Number.Text(10))
-	}
-	return New256Point(xHex, oddBeta.Number.Text(10))
+//GetAddress will get the address from  the pubkey
+func (point256 *Point256) GetAddress() string {
+	hashedSEC := point256.hash160(true)
+	hashedWithPrefix := utils.Encode58CheckSum("6f" + hashedSEC)
+	return hashedWithPrefix
 }

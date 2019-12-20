@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"github.com/btcsuite/btcutil/base58"
 	"golang.org/x/crypto/ripemd160"
 	"math/big"
@@ -66,6 +67,7 @@ func Encode58(str string) string {
 
 //Encode58CheckSum will include the checksum to a base58 encoded string
 func Encode58CheckSum(str string) string {
+	fmt.Println(str)
 	hexBytes, _ := hex.DecodeString(str)
 	checksum := sha256.Sum256(hexBytes)
 	first4 := checksum[0:4]
@@ -78,7 +80,7 @@ func Hash160(sec string) string {
 	hexBytes, _ := hex.DecodeString(sec)
 	hash256 := sha256.Sum256(hexBytes)
 	ripemdHasher := ripemd160.New()
-	ripemdHasher.Write(hash256)
+	ripemdHasher.Write(hash256[:])
 	hashBytes := ripemdHasher.Sum(nil)
 	hashString := fmt.Sprintf("%x", hashBytes)
 	return hashString
