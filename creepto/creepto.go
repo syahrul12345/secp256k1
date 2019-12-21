@@ -126,8 +126,14 @@ func (point256 *Point256) hash160(compressed bool) string {
 }
 
 //GetAddress will get the address from  the pubkey
-func (point256 *Point256) GetAddress() string {
-	hashedSEC := point256.hash160(true)
-	hashedWithPrefix := utils.Encode58CheckSum("6f" + hashedSEC)
+func (point256 *Point256) GetAddress(compressed bool, testnet bool) string {
+	hashedSEC := point256.hash160(compressed)
+	var prefix string
+	if testnet {
+		prefix = "6f"
+	} else {
+		prefix = "00"
+	}
+	hashedWithPrefix := utils.Encode58CheckSum(prefix + hashedSEC)
 	return hashedWithPrefix
 }

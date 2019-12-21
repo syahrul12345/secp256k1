@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/big"
 	"secp256k1/curve"
+	"secp256k1/utils"
 	"testing"
 
 	"github.com/bitherhq/go-bither/common/hexutil"
@@ -124,5 +125,37 @@ func TestSec(t *testing.T) {
 			)
 		}
 
+	}
+}
+func TestDer(t *testing.T) {
+	// Generate 4 random hexadecimal numbers for r1,s1,r2,s2
+	// Hexadecimals prepend 0x otherwise utils.ToBigInt() wont work
+	r1 := utils.GenerateSecret()
+	s1 := utils.GenerateSecret()
+	r2 := utils.GenerateSecret()
+	s2 := utils.GenerateSecret()
+	// s := utils.GenerateSecret()
+	var sets []coordinates = []coordinates{
+		{
+			"r": r1,
+			"s": s1,
+		},
+		{
+			"r": r2,
+			"s": s2,
+		},
+	}
+	for _, set := range sets {
+		//Generate the signature
+		sig := &Signature{
+			utils.ToBigInt("0x" + set["r"]),
+			utils.ToBigInt("0x" + set["s"]),
+		}
+		der := sig.DER()
+		resSig := ParseDER(der)
+		res := sig.Equals(resSig)
+		if !res {
+			t.Errorf("Test to parse the bin failed!")
+		}
 	}
 }

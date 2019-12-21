@@ -8,11 +8,11 @@ import (
 
 func main() {
 	// Create a new private key
-	privKey := creepto.CreateNewPrivateKey()
-	//Generate the pubKey from privateKey
-	pubKey := privKey.PublicKey
-	addr := pubKey.GetAddress()
-	fmt.Println(addr)
+	// pk := creepto.CreateNewPrivateKey()
+	// fmt.Println(pk.PublicKey.GetAddress())
+	pubKey := creepto.GetPublicKey("5000")
+	fmt.Println(pubKey.GetAddress(false, false))
+
 }
 
 func intToHexadecimal(integer string) string {

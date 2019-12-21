@@ -67,11 +67,10 @@ func Encode58(str string) string {
 
 //Encode58CheckSum will include the checksum to a base58 encoded string
 func Encode58CheckSum(str string) string {
-	fmt.Println(str)
 	hexBytes, _ := hex.DecodeString(str)
-	checksum := sha256.Sum256(hexBytes)
-	first4 := checksum[0:4]
-	first4HexString := hex.EncodeToString(first4)
+	preCheckSum := sha256.Sum256(hexBytes)
+	checksum := sha256.Sum256(preCheckSum[:])
+	first4HexString := hex.EncodeToString(checksum[0:4])
 	return Encode58(str + first4HexString)
 }
 
