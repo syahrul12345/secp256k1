@@ -32,6 +32,11 @@ func CreateNewPrivateKey() PrivateKey {
 	}
 }
 
+//DumpSecret will display the PrivateKey in a human readable format
+func (privKey PrivateKey) DumpSecret() string {
+	return privKey.secret
+}
+
 //GetPublicKey will derive a Public Key given a private key.
 func GetPublicKey(secret string) *Point256 {
 	//Generator Point for bitcoin
@@ -77,5 +82,22 @@ func (privKey PrivateKey) Sign(message string) (*Signature, string) {
 		R.X.Number,
 		s,
 	}, "0x" + z
+}
 
+//Export will display the privatekey as WIF format
+func (privKey PrivateKey) Export(compressed bool, testnet bool) string {
+	secret := privKey.DumpSecret()
+	var prefix string
+	var suffix string
+	if testnet {
+		prefix = "6f"
+	} else {
+		prefix = "00"
+	}
+	if compressed {
+		suffix = "01"
+	} else {
+		suffix = ""
+	}
+	return utils.Encode58CheckSum(prefix + secret + suffix)
 }

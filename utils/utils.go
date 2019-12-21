@@ -5,9 +5,11 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"math/big"
+	"strconv"
+
 	"github.com/btcsuite/btcutil/base58"
 	"golang.org/x/crypto/ripemd160"
-	"math/big"
 )
 
 //GenerateSecret will create  a deterministic number
@@ -89,4 +91,11 @@ func divmod(numerator, denominator uint64) (quotient, remainder uint64) {
 	quotient = numerator / denominator // integer division, decimals are truncated
 	remainder = numerator % denominator
 	return
+}
+
+func intToHexadecimal(integer string) string {
+	n, _ := strconv.ParseUint(integer, 16, 64)
+	coefficientString := strconv.Itoa(int(n))
+	return "0x" + coefficientString
+
 }
