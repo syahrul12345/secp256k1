@@ -138,7 +138,6 @@ func (element1 FieldElement) TrueDiv(element2 FieldElement) FieldElement {
 //Sqrt will squareroot truediv
 func (element1 FieldElement) Sqrt() FieldElement {
 	power := big.NewInt(0).Div(big.NewInt(0).Add(n, big.NewInt(1)), big.NewInt(4))
-
 	//Thus loops infinitely... needs ot be researched
 	return element1.Pow(power.String())
 }

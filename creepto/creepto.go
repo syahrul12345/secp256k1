@@ -6,9 +6,6 @@ import (
 	"secp256k1/curve"
 	"secp256k1/fieldelement"
 	"secp256k1/utils"
-	"strconv"
-
-	"github.com/bitherhq/go-bither/common/hexutil"
 )
 
 const (
@@ -22,12 +19,6 @@ type Point256 struct {
 	Y *fieldelement.FieldElement
 	A fieldelement.FieldElement
 	B fieldelement.FieldElement
-}
-
-//Signature represents a string
-type Signature struct {
-	R string
-	S string
 }
 
 //New256Point creates a Point256 representing a public key
@@ -45,7 +36,7 @@ func New256Point(x string, y string) *Point256 {
 	}
 }
 
-//Converts a normal Point to a Point256
+//NormalTo256 will convert the given point to a Point256 type
 func NormalTo256(point *curve.Point) *Point256 {
 	return &Point256{
 		point.X,
@@ -59,40 +50,32 @@ func NormalTo256(point *curve.Point) *Point256 {
 func (point256 *Point256) Mul(coefficient string) (*curve.Point, error) {
 	// Check if the coefifcinent is already hexed
 	coeff := utils.ToBigInt(coefficient)
-	modoBig, err := hexutil.DecodeBig(Order)
-	if err != nil {
+	modoBig, ok := big.NewInt(0).SetString(Order[2:], 16)
+	if !ok {
 		return nil, nil
 	}
 	//Sets the new coefficient
 
 	coeff.Mod(coeff, modoBig)
-	coeffString := hexutil.EncodeBig(coeff)
+	coeffString := "0x" + coeff.Text(16)
 	// We create a normal point that can do the multiplacaiton
 	x := point256.X.Number
 	y := point256.Y.Number
 	//Skip error handling, it will definately be on the line
-	tempPoint, _ := curve.NewPoint(hexutil.EncodeBig(x), hexutil.EncodeBig(y))
+	tempPoint, _ := curve.NewPoint("0x"+x.Text(16), "0x"+y.Text(16))
 	result, _ := tempPoint.Mul(coeffString)
 
 	//Return and reconvert it to  a point256
 	return result, nil
 }
 
-//NewSignature will create a new Signature
-func NewSignature(r string, s string) *Signature {
-	return &Signature{
-		r,
-		s,
-	}
-}
-
 //Verify This function will verify if the Public Key has sent the message z, with enclosed signature
 func (point256 *Point256) Verify(message string, sig *Signature) bool {
-	z, _ := hexutil.DecodeBig(message)
-	r, _ := hexutil.DecodeBig(sig.R)
-	s, _ := hexutil.DecodeBig(sig.S)
+	z := utils.ToBigInt(message)
+	r := sig.R
+	s := sig.S
 
-	bigOrder, _ := hexutil.DecodeBig(Order)
+	bigOrder := utils.ToBigInt(Order)
 	newOrder := big.NewInt(0).Sub(bigOrder, big.NewInt(2))
 	sInv := big.NewInt(0).Exp(s, newOrder, bigOrder)
 	//u = z/s
@@ -105,8 +88,8 @@ func (point256 *Point256) Verify(message string, sig *Signature) bool {
 	//Create G
 	G, _ := curve.NewPoint("0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798", "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8")
 
-	firstTerm, _ := G.Mul(hexutil.EncodeBig(u))
-	secondTerm, _ := point256.Mul(hexutil.EncodeBig(v))
+	firstTerm, _ := G.Mul("0x" + u.Text(16))
+	secondTerm, _ := point256.Mul("0x" + v.Text(16))
 	R, err := firstTerm.Add(secondTerm)
 	if err != nil {
 		fmt.Println(err)
@@ -138,40 +121,19 @@ func (point256 *Point256) SEC(compressed bool) string {
 	return "04" + textX + textY
 }
 
-//ParseBin will discover the public key given a SEC_BIN
-func ParseBin(secBin string) *Point256 {
-	// Check if it's compressed or not
-	flag, _ := strconv.ParseInt(secBin[1:2], 10, 64)
-	if flag == 4 {
-		xHalf := secBin[2:66]
-		yHalf := secBin[66:]
-		return New256Point("0x"+xHalf, "0x"+yHalf)
-	}
-	xHalf := secBin[2:]
-	xHex := "0x" + xHalf
-	// Create the required fields
-	xField := fieldelement.NewFieldElement(xHex)
-	alpha := xField.Pow("3").Add(fieldelement.NewFieldElement("7"))
-	beta := alpha.Sqrt()
-	//Check if 0 == beta % 2 and check if it's 0 a
-	//Double check 0 as the big library returns a 0
-	var evenBeta fieldelement.FieldElement
-	var oddBeta fieldelement.FieldElement
-	var input *big.Int
-	input = big.NewInt(0).Sub(beta.Prime, beta.Number)
-	if big.NewInt(0).Cmp(big.NewInt(0).Mod(beta.Number, big.NewInt(2))) == 0 {
-		evenBeta = beta
-		oddBeta = fieldelement.NewFieldElement(input.Text(10))
-	} else {
-		evenBeta = fieldelement.NewFieldElement(input.Text(10))
-		oddBeta = beta
+func (point256 *Point256) hash160(compressed bool) string {
+	return utils.Hash160(point256.SEC(compressed))
+}
 
-	}
-	//even
-	if flag == 2 {
-		return New256Point(xHex, evenBeta.Number.Text(10))
+//GetAddress will get the address from  the pubkey
+func (point256 *Point256) GetAddress(compressed bool, testnet bool) string {
+	hashedSEC := point256.hash160(compressed)
+	var prefix string
+	if testnet {
+		prefix = "6f"
 	} else {
-		return New256Point(xHex, oddBeta.Number.Text(10))
+		prefix = "00"
 	}
-
+	hashedWithPrefix := utils.Encode58CheckSum(prefix + hashedSEC)
+	return hashedWithPrefix
 }

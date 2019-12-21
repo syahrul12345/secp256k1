@@ -1,11 +1,9 @@
 package curve
 
 import (
-	"fmt"
-	"github.com/bitherhq/go-bither/common/hexutil"
 	"math/big"
 	"secp256k1/fieldelement"
-	"strconv"
+	"secp256k1/utils"
 )
 
 type Point struct {
@@ -33,8 +31,8 @@ func NewPoint(x string, y string) (*Point, error) {
 
 	var feX *fieldelement.FieldElement
 	var feY *fieldelement.FieldElement
-	feA := fieldelement.NewFieldElement(hexutil.EncodeUint64(0))
-	feB := fieldelement.NewFieldElement(hexutil.EncodeUint64(7))
+	feA := fieldelement.NewFieldElement(utils.FromBigInt(big.NewInt(0)))
+	feB := fieldelement.NewFieldElement(utils.FromBigInt(big.NewInt(7)))
 	if x == "nil" {
 		feX = nil
 	}
@@ -60,8 +58,8 @@ func NewPoint(x string, y string) (*Point, error) {
 			return left.Equals(right)
 		}(fieldelement.NewFieldElement(x),
 			fieldelement.NewFieldElement(y),
-			fieldelement.NewFieldElement(hexutil.EncodeUint64(0)),
-			fieldelement.NewFieldElement(hexutil.EncodeUint64(7)))
+			fieldelement.NewFieldElement(utils.FromBigInt(big.NewInt(0))),
+			fieldelement.NewFieldElement(utils.FromBigInt(big.NewInt(7))))
 		if onCurve == false {
 			return nil,
 				&errorMessage{"The point doesnt exist on the curve"}
@@ -114,20 +112,9 @@ func (point1 *Point) NotEquals(point2 *Point) bool {
 	return x1.NotEquals(*x2) || y1.NotEquals(*y2) || a1.NotEquals(a2) || b1.NotEquals(b2)
 }
 
-//Multiplies the a point with a coefficient
+//Mul will multiply the point with a string
 func (point1 *Point) Mul(coefficient string) (*Point, error) {
-	_, alreadyHex := strconv.ParseUint(coefficient, 16, 64)
-	var coeff big.Int
-	if alreadyHex != nil {
-		tempCoeff, _ := hexutil.DecodeBig(coefficient)
-		coeff = *tempCoeff
-	} else {
-		coefficientInterger, _ := strconv.Atoi(coefficient)
-		hexString := fmt.Sprintf("%x", coefficientInterger)
-		tempCoeff, _ := hexutil.DecodeBig("0x" + hexString)
-		coeff = *tempCoeff
-
-	}
+	coeff := utils.ToBigInt(coefficient)
 	current := point1
 	result := &Point{
 		nil,
@@ -135,13 +122,14 @@ func (point1 *Point) Mul(coefficient string) (*Point, error) {
 		point1.A,
 		point1.B,
 	}
+	//Binary expansion
 	for coeff.Cmp(big.NewInt(0)) > 0 {
 		// keep adding to ther result if the rightmost bit is 1
-		if (coeff.Int64() & 1) == 1 {
+		if big.NewInt(0).And(coeff, big.NewInt(1)).Int64() == 1 {
 			result, _ = result.Add(current)
 		}
 		current, _ = current.Add(current)
-		coeff.Rsh(&coeff, 1)
+		coeff.Rsh(coeff, 1)
 	}
 	return result, nil
 }
@@ -192,7 +180,7 @@ func (point1 *Point) Add(point2 *Point) (*Point, error) {
 		}, nil
 	}
 	//Case 3: The tangent of the point forms avertical line
-	if point1.Equals(point2) && point1.Y.Equals(point1.X.Mul(fieldelement.NewFieldElement(hexutil.EncodeUint64(0)))) {
+	if point1.Equals(point2) && point1.Y.Equals(point1.X.Mul(fieldelement.NewFieldElement(utils.FromBigInt(big.NewInt(0))))) {
 		return &Point{
 			nil,
 			nil,
