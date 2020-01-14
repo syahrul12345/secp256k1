@@ -101,3 +101,8 @@ func (privKey PrivateKey) Export(compressed bool, testnet bool) string {
 	}
 	return utils.Encode58CheckSum(prefix + secret + suffix)
 }
+
+//GetAddress will get teh address of the privatekey
+func (privKey PrivateKey) GetAddress(compressed bool, testnet bool) string {
+	return privKey.PublicKey.GetAddress(compressed, testnet)
+}
