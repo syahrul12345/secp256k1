@@ -1,7 +1,6 @@
 package curve
 
 import (
-	"fmt"
 	"math/big"
 	"secp256k1/fieldelement"
 	"secp256k1/utils"
@@ -116,7 +115,6 @@ func (point1 *Point) NotEquals(point2 *Point) bool {
 //Mul will multiply the point with a string
 func (point1 *Point) Mul(coefficient string) (*Point, error) {
 	coeff := utils.ToBigInt(coefficient)
-	fmt.Println(coeff)
 	current := point1
 	result := &Point{
 		nil,

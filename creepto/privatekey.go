@@ -32,6 +32,15 @@ func CreateNewPrivateKey() PrivateKey {
 	}
 }
 
+//CreateNewPrivateKeyFromSecret will create a new privkey from a secret
+func CreateNewPrivateKeyFromSecret(secret string) PrivateKey {
+	pubKey := GetPublicKey(secret)
+	return PrivateKey{
+		pubKey,
+		secret,
+	}
+}
+
 //DumpSecret will display the PrivateKey in a human readable format
 func (privKey PrivateKey) DumpSecret() string {
 	return privKey.secret
@@ -45,7 +54,7 @@ func GetPublicKey(secret string) *Point256 {
 	return New256Point(utils.FromBigInt(pubKey.X.Number), utils.FromBigInt(pubKey.Y.Number))
 }
 
-//Sign willl sign a message with a privateKey
+//Sign willl sign a message with a privateKey. This will return a signature object, and the signature hash
 func (privKey PrivateKey) Sign(message string) (*Signature, string) {
 	//Generator point
 	G, _ := curve.NewPoint("0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798", "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8")

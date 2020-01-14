@@ -76,9 +76,9 @@ func (point256 *Point256) Mul(coefficient string) (*curve.Point, error) {
 	return result, nil
 }
 
-//Verify This function will verify if the Public Key has sent the message z, with enclosed signature
-func (point256 *Point256) Verify(message string, sig *Signature) bool {
-	z := utils.ToBigInt(message)
+//Verify This function will verify if the Public Key has sent the signature hash z, with enclosed signature
+func (point256 *Point256) Verify(signatureHash string, sig *Signature) bool {
+	z := utils.ToBigInt(signatureHash)
 	r := sig.R
 	s := sig.S
 
