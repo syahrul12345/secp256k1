@@ -2,9 +2,9 @@ package creepto
 
 import (
 	"fmt"
+	"github.com/syahrul12345/secp256k1/curve"
+	"github.com/syahrul12345/secp256k1/utils"
 	"math/big"
-	"secp256k1/curve"
-	"secp256k1/utils"
 	"testing"
 
 	"github.com/bitherhq/go-bither/common/hexutil"

@@ -1,7 +1,7 @@
 package secp256k1
 
 import (
-	"secp256k1/creepto"
+	"github.com/syahrul12345/secp256k1/creepto"
 )
 
 //NewBitCoinAddress  will generate a bitcoin address
@@ -10,4 +10,32 @@ func NewBitCoinAddress(compressed bool, testnet bool) (pubKey string, secret str
 	pubKey = privateKey.PublicKey.GetAddress(compressed, testnet)
 	secret = privateKey.DumpSecret()
 	return
+}
+
+//GetMainnetAddressFromPrivKey : Returns the public key for a given private key in the mainnet
+func GetMainnetAddressFromPrivKey(secret string) string {
+	point256 := creepto.GetPublicKey(secret)
+	return point256.GetAddress(true, false)
+}
+
+//GetTestnetAddressFromPrivKey : Returns the public key for a given private key in the testnet
+func GetTestnetAddressFromPrivKey(secret string) string {
+	point256 := creepto.GetPublicKey(secret)
+	return point256.GetAddress(true, true)
+}
+
+//Signs a message given a privatekey
+func Sign(secret string, message string) (*creepto.Signature, string) {
+	privKeyObj := creepto.CreateNewPrivateKeyFromSecret(secret)
+	return privKeyObj.Sign(message)
+}
+
+//Parse the sec in the string format and return the corresponding point256
+func ParseSec(secPubKey string) *creepto.Point256 {
+	return creepto.ParseSec(secPubKey)
+}
+
+//Parse the derString and returns the unserialized Signature Object
+func ParseDer(derString string) *creepto.Signature {
+	return creepto.ParseDER(derString)
 }

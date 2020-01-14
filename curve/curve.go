@@ -2,8 +2,8 @@ package curve
 
 import (
 	"math/big"
-	"secp256k1/fieldelement"
-	"secp256k1/utils"
+	"github.com/syahrul12345/secp256k1/fieldelement"
+	"github.com/syahrul12345/secp256k1/utils"
 )
 
 type Point struct {

@@ -1,16 +1,23 @@
 package creepto
 
 import (
+	"encoding/hex"
 	"fmt"
+	"github.com/syahrul12345/secp256k1/curve"
+	"github.com/syahrul12345/secp256k1/fieldelement"
+	"github.com/syahrul12345/secp256k1/utils"
 	"math/big"
-	"secp256k1/curve"
-	"secp256k1/fieldelement"
-	"secp256k1/utils"
 )
 
-const (
+var (
 	//Order of fin
 	Order string = "0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141"
+	//P is the max prime value
+	P string = big.NewInt(0).Sub(
+		big.NewInt(0).Sub(
+			big.NewInt(0).Exp(big.NewInt(2), big.NewInt(256), big.NewInt(0)),
+			big.NewInt(0).Exp(big.NewInt(2), big.NewInt(32), big.NewInt(0))),
+		big.NewInt(977)).String()
 )
 
 //Point256 represents the public key on the elliptical curve
@@ -69,9 +76,9 @@ func (point256 *Point256) Mul(coefficient string) (*curve.Point, error) {
 	return result, nil
 }
 
-//Verify This function will verify if the Public Key has sent the message z, with enclosed signature
-func (point256 *Point256) Verify(message string, sig *Signature) bool {
-	z := utils.ToBigInt(message)
+//Verify This function will verify if the Public Key has sent the signature hash z, with enclosed signature
+func (point256 *Point256) Verify(signatureHash string, sig *Signature) bool {
+	z := utils.ToBigInt(signatureHash)
 	r := sig.R
 	s := sig.S
 
@@ -119,6 +126,55 @@ func (point256 *Point256) SEC(compressed bool) string {
 	textX := xBytes.Text(16)
 	textY := yBytes.Text(16)
 	return "04" + textX + textY
+}
+
+//ParseSec will return the point256
+func ParseSec(secString string) *Point256 {
+	// Lets convert the string to a bytes
+	byteSec, _ := hex.DecodeString(secString)
+	if byteSec[0] == 4 {
+		x := "0x" + hex.EncodeToString(byteSec[1:33])
+		y := "0x" + hex.EncodeToString(byteSec[33:65])
+		return New256Point(x, y)
+	}
+	var isEven bool
+	if byteSec[0] == 2 {
+		isEven = true
+	} else {
+		isEven = false
+	}
+	bytesString := "0x" + hex.EncodeToString(byteSec[1:])
+	x := fieldelement.NewFieldElement(bytesString)
+	a := fieldelement.NewFieldElement("0")
+	b := fieldelement.NewFieldElement("7")
+	alpha := x.Pow("3").Add(b)
+	beta := alpha.Sqrt()
+	var evenBeta fieldelement.FieldElement
+	var oddBeta fieldelement.FieldElement
+	if big.NewInt(0).Mod(beta.Number, big.NewInt(2)).Cmp(big.NewInt(0)) == 0 {
+		evenBeta = beta
+		Pbig, _ := big.NewInt(0).SetString(P, 16)
+		oddBeta = fieldelement.NewFieldElement(big.NewInt(0).Sub(Pbig, beta.Number).String())
+	} else {
+		Pbig, _ := big.NewInt(0).SetString(P, 16)
+		evenBeta = fieldelement.NewFieldElement(big.NewInt(0).Sub(Pbig, beta.Number).String())
+		oddBeta = beta
+	}
+	if isEven {
+		return &Point256{
+			&x,
+			&evenBeta,
+			a,
+			b,
+		}
+	}
+	return &Point256{
+		&x,
+		&oddBeta,
+		a,
+		b,
+	}
+
 }
 
 func (point256 *Point256) hash160(compressed bool) string {
