@@ -3,8 +3,8 @@ package creepto
 import (
 	"encoding/asn1"
 	"encoding/hex"
+	"github.com/syahrul12345/secp256k1/utils"
 	"math/big"
-	"secp256k1/utils"
 )
 
 //Signature represents a string

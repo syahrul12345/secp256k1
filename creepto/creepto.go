@@ -3,10 +3,10 @@ package creepto
 import (
 	"encoding/hex"
 	"fmt"
+	"github.com/syahrul12345/secp256k1/curve"
+	"github.com/syahrul12345/secp256k1/fieldelement"
+	"github.com/syahrul12345/secp256k1/utils"
 	"math/big"
-	"secp256k1/curve"
-	"secp256k1/fieldelement"
-	"secp256k1/utils"
 )
 
 var (

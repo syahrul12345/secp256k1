@@ -3,9 +3,9 @@ package creepto
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"github.com/syahrul12345/secp256k1/curve"
+	"github.com/syahrul12345/secp256k1/utils"
 	"math/big"
-	"secp256k1/curve"
-	"secp256k1/utils"
 )
 
 //PrivateKey represents a private key that can be used to decrypt messages.

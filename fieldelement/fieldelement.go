@@ -2,7 +2,7 @@ package fieldelement
 
 import (
 	"math/big"
-	"secp256k1/utils"
+	"github.com/syahrul12345/secp256k1/utils"
 	"strconv"
 )
 
