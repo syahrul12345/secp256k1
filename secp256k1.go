@@ -1,7 +1,7 @@
 package secp256k1
 
 import (
-	"secp256k1/creepto"
+	"github.com/syahrul12345/secp256k1/creepto"
 )
 
 //NewBitCoinAddress  will generate a bitcoin address
