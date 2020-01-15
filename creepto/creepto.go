@@ -84,7 +84,7 @@ func (point256 *Point256) Mul(coefficient string) (*curve.Point, error) {
 
 //Verify This function will verify if the Public Key has sent the signature hash z, with enclosed signature
 func (point256 *Point256) Verify(signatureHash string, sig *Signature) bool {
-	z, _ := big.NewInt(0).SetString(signatureHash, 16)
+	z := utils.ToBigInt(signatureHash)
 	r := sig.R
 	s := sig.S
 	bigOrder := utils.ToBigInt(Order)
