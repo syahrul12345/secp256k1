@@ -69,8 +69,14 @@ func (point256 *Point256) Mul(coefficient string) (*curve.Point, error) {
 	x := point256.X.Number
 	y := point256.Y.Number
 	//Skip error handling, it will definately be on the line
-	tempPoint, _ := curve.NewPoint("0x"+x.Text(16), "0x"+y.Text(16))
-	result, _ := tempPoint.Mul(coeffString)
+	tempPoint, err := curve.NewPoint("0x"+x.Text(16), "0x"+y.Text(16))
+	if err != nil {
+		return nil, err
+	}
+	result, err2 := tempPoint.Mul(coeffString)
+	if err2 != nil {
+		return nil, err2
+	}
 
 	//Return and reconvert it to  a point256
 	return result, nil
@@ -78,10 +84,9 @@ func (point256 *Point256) Mul(coefficient string) (*curve.Point, error) {
 
 //Verify This function will verify if the Public Key has sent the signature hash z, with enclosed signature
 func (point256 *Point256) Verify(signatureHash string, sig *Signature) bool {
-	z := utils.ToBigInt(signatureHash)
+	z, _ := big.NewInt(0).SetString(signatureHash, 16)
 	r := sig.R
 	s := sig.S
-
 	bigOrder := utils.ToBigInt(Order)
 	newOrder := big.NewInt(0).Sub(bigOrder, big.NewInt(2))
 	sInv := big.NewInt(0).Exp(s, newOrder, bigOrder)
@@ -95,9 +100,16 @@ func (point256 *Point256) Verify(signatureHash string, sig *Signature) bool {
 	//Create G
 	G, _ := curve.NewPoint("0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798", "0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8")
 
-	firstTerm, _ := G.Mul("0x" + u.Text(16))
-	secondTerm, _ := point256.Mul("0x" + v.Text(16))
+	firstTerm, err := G.Mul("0x" + u.Text(16))
+	if err != nil {
+		return false
+	}
+	secondTerm, err := point256.Mul("0x" + v.Text(16))
+	if err != nil {
+		return false
+	}
 	R, err := firstTerm.Add(secondTerm)
+
 	if err != nil {
 		fmt.Println(err)
 	}
