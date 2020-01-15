@@ -39,3 +39,10 @@ func ParseSec(secPubKey string) *creepto.Point256 {
 func ParseDer(derString string) *creepto.Signature {
 	return creepto.ParseDER(derString)
 }
+
+//Verify : Verifies if the der signature string, a signature hash is sent by the sec PUbkey
+func Verify(secPubKey string, der string, z string) bool {
+	point256 := creepto.ParseSec(secPubKey)
+	signature := creepto.ParseDER(der)
+	return point256.Verify(z, signature)
+}
