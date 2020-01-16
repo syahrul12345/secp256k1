@@ -20,6 +20,14 @@ var (
 		big.NewInt(977)).String()
 )
 
+type errorMessage struct {
+	s string
+}
+
+func (e *errorMessage) Error() string {
+	return e.s
+}
+
 //Point256 represents the public key on the elliptical curve
 type Point256 struct {
 	X *fieldelement.FieldElement
@@ -83,7 +91,7 @@ func (point256 *Point256) Mul(coefficient string) (*curve.Point, error) {
 }
 
 //Verify This function will verify if the Public Key has sent the signature hash z, with enclosed signature
-func (point256 *Point256) Verify(signatureHash string, sig *Signature) bool {
+func (point256 *Point256) Verify(signatureHash string, sig *Signature) (bool, error) {
 	z := utils.ToBigInt(signatureHash)
 	r := sig.R
 	s := sig.S
@@ -102,23 +110,23 @@ func (point256 *Point256) Verify(signatureHash string, sig *Signature) bool {
 
 	firstTerm, err := G.Mul("0x" + u.Text(16))
 	if err != nil {
-		return false
+		return false, err
 	}
 	secondTerm, err := point256.Mul("0x" + v.Text(16))
 	if err != nil {
-		return false
+		return false, err
 	}
 	R, err := firstTerm.Add(secondTerm)
 
 	if err != nil {
-		fmt.Println(err)
+		return false, err
 	}
 
 	res := R.X.Number.Cmp(r)
 	if res == 0 {
-		return true
+		return true, nil
 	}
-	return false
+	return false, &errorMessage{"Failed to verify for some unknown reason"}
 }
 
 //SEC will create the serialized public key for propogation
