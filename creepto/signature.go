@@ -1,7 +1,6 @@
 package creepto
 
 import (
-	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"math/big"
@@ -76,7 +75,6 @@ func (sig *Signature) Equals(sig2 *Signature) bool {
 func ParseDER(derstring string) *Signature {
 	buf, err := hex.DecodeString(derstring)
 	bufLength := len(buf)
-	fmt.Println(bufLength)
 	if err != nil {
 		fmt.Println("Failed to serialize DER string")
 	}
@@ -89,8 +87,6 @@ func ParseDER(derstring string) *Signature {
 	}
 	length := int(buf[0])
 	buf = buf[1:]
-	fmt.Println(length + 2)
-	fmt.Println(bufLength)
 	if length+2 != bufLength {
 		fmt.Println("Bad signature length")
 		return nil
@@ -104,7 +100,7 @@ func ParseDER(derstring string) *Signature {
 
 	rlength := int8(buf[0])
 	buf = buf[1:]
-	r := binary.BigEndian.Uint64(buf[:rlength])
+	r := big.NewInt(0).SetBytes(buf[:rlength])
 	buf = buf[rlength:]
 
 	marker = buf[0]
@@ -115,13 +111,13 @@ func ParseDER(derstring string) *Signature {
 	}
 	slength := int8(buf[0])
 	buf = buf[1:]
-	s := binary.BigEndian.Uint64(buf[:slength])
+	s := big.NewInt(0).SetBytes(buf[:slength])
 	if len(derstring)/2 != int(6+rlength+slength) {
 		fmt.Println("signature is too long")
 		return nil
 	}
 	return &Signature{
-		big.NewInt(0).SetUint64(r),
-		big.NewInt(0).SetUint64(s),
+		r,
+		s,
 	}
 }
