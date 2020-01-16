@@ -17,7 +17,7 @@ var (
 		big.NewInt(0).Sub(
 			big.NewInt(0).Exp(big.NewInt(2), big.NewInt(256), big.NewInt(0)),
 			big.NewInt(0).Exp(big.NewInt(2), big.NewInt(32), big.NewInt(0))),
-		big.NewInt(977)).String()
+		big.NewInt(977)).Text(16)
 )
 
 type errorMessage struct {
@@ -126,20 +126,18 @@ func (point256 *Point256) Verify(signatureHash string, sig *Signature) (bool, er
 	if res == 0 {
 		return true, nil
 	}
-	return false, &errorMessage{"Failed to verify for some unknown reason"}
+	return false, &errorMessage{"The message cannot be verified. Wrong signature for the public key"}
 }
 
 //SEC will create the serialized public key for propogation
 //Takes a boolean paramenter to determine if the output is compressed or not
 func (point256 *Point256) SEC(compressed bool) string {
 	if compressed {
-		x := big.NewInt(0).Mod(point256.X.Number, big.NewInt(2))
-		xBytes := new(big.Int).SetBytes(point256.X.Number.Bytes())
-		text := xBytes.Text(16)
-		if x.Cmp(big.NewInt(0)) == 0 {
-			return "02" + text
+		y := big.NewInt(0).Mod(point256.Y.Number, big.NewInt(2))
+		if y.Cmp(big.NewInt(0)) == 0 {
+			return "02" + point256.X.Number.Text(16)
 		}
-		return "03" + text
+		return "03" + point256.X.Number.Text(16)
 	}
 	xBytes := new(big.Int).SetBytes(point256.X.Number.Bytes())
 	yBytes := new(big.Int).SetBytes(point256.Y.Number.Bytes())

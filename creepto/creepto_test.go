@@ -1,6 +1,8 @@
 package creepto
 
 import (
+	"encoding/binary"
+	"encoding/hex"
 	"fmt"
 	"github.com/syahrul12345/secp256k1/curve"
 	"github.com/syahrul12345/secp256k1/utils"
@@ -73,7 +75,7 @@ func TestVerify(t *testing.T) {
 	}
 	for _, set := range sets {
 		signature := NewSignature(set["r"], set["s"])
-		verified := point.Verify(set["z"], signature)
+		verified, _ := point.Verify(set["z"], signature)
 		if !verified {
 			t.Errorf("Verification of message Z(%s) with signatures (%s,%s) failed", set["z"], set["r"], set["s"])
 		}
@@ -95,7 +97,7 @@ func TestSec(t *testing.T) {
 		},
 		{
 			"coefficient":  "42424242",
-			"compressed":   "02aee2e7d843f7430097859e2bc603abcc3274ff8169c1a469fee0f20614066f8e",
+			"compressed":   "03aee2e7d843f7430097859e2bc603abcc3274ff8169c1a469fee0f20614066f8e",
 			"uncompressed": "04aee2e7d843f7430097859e2bc603abcc3274ff8169c1a469fee0f20614066f8e21ec53f40efac47ac1c5211b2123527e0e9b57ede790c4da1e72c91fb7da54a3",
 		},
 	}
@@ -134,6 +136,7 @@ func TestDer(t *testing.T) {
 	s1 := utils.GenerateSecret()
 	r2 := utils.GenerateSecret()
 	s2 := utils.GenerateSecret()
+
 	// s := utils.GenerateSecret()
 	var sets []coordinates = []coordinates{
 		{
@@ -147,10 +150,15 @@ func TestDer(t *testing.T) {
 	}
 	for _, set := range sets {
 		//Generate the signature
+		rbuf, _ := hex.DecodeString(set["r"])
+		ruint64 := binary.BigEndian.Uint64(rbuf)
+		sbuf, _ := hex.DecodeString(set["s"])
+		suint64 := binary.BigEndian.Uint64(sbuf)
 		sig := &Signature{
-			utils.ToBigInt("0x" + set["r"]),
-			utils.ToBigInt("0x" + set["s"]),
+			big.NewInt(0).SetUint64(ruint64),
+			big.NewInt(0).SetUint64(suint64),
 		}
+
 		der := sig.DER()
 		resSig := ParseDER(der)
 		res := sig.Equals(resSig)
