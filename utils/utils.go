@@ -67,6 +67,15 @@ func Encode58(str string) string {
 
 }
 
+//Decode58 will decode an address into the corresponding 20 byte hexadecimal representation of the hashed SEC.
+func Decode58(address string) string {
+	// Decode the address. This includes the 4 byte checksum at the end
+	decoded := base58.Decode(address)
+	// Remove the checksum and the first byte.First byte is the prefix of 6f for testnet, and 00 for mainnet
+	decoded = decoded[1 : len(decoded)-4]
+	return hex.EncodeToString(decoded)
+}
+
 //Encode58CheckSum will include the checksum to a base58 encoded string
 func Encode58CheckSum(str string) string {
 	hexBytes, _ := hex.DecodeString(str)
