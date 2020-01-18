@@ -1,11 +1,13 @@
 package creepto
 
 import (
+	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
+	"math/big"
+
 	"github.com/syahrul12345/secp256k1/curve"
 	"github.com/syahrul12345/secp256k1/utils"
-	"math/big"
 )
 
 //PrivateKey represents a private key that can be used to decrypt messages.
@@ -62,17 +64,16 @@ func (privKey PrivateKey) Sign(message string) (*Signature, string) {
 	var data []byte = []byte(message)
 	hasher := sha256.New()
 	hasher.Write(data)
-	z := hex.EncodeToString(hasher.Sum(nil))
+	sigHash := hex.EncodeToString(hasher.Sum(nil))
 	//End of hashing phase
-
 	//Calculate the required mathematical constants. Generate a deterministic k
-	k := utils.GenerateSecret()
+	k := privKey.GenerateDeterministicK(message)
 	R, _ := G.Mul("0x" + k)
 	bigOrder := utils.ToBigInt(Order)
 	newOrder := big.NewInt(0).Sub(bigOrder, big.NewInt(2))
 	bigK := utils.ToBigInt("0x" + k)
-	bigZ := utils.ToBigInt("0x" + z)
-	bigSecret := utils.ToBigInt("0x" + privKey.secret)
+	bigZ := utils.ToBigInt("0x" + message)
+	bigSecret := utils.ToBigInt(privKey.DumpSecret())
 	//Do the actual math to generate signatures
 	//Calculate: 1/k
 	kInv := big.NewInt(0).Exp(bigK, newOrder, bigOrder)
@@ -90,7 +91,82 @@ func (privKey PrivateKey) Sign(message string) (*Signature, string) {
 	return &Signature{
 		R.X.Number,
 		s,
-	}, "0x" + z
+	}, "0x" + sigHash
+}
+
+func digest(key []byte, buf []byte) []byte {
+	mac := hmac.New(sha256.New, key)
+	mac.Write(buf)
+	return mac.Sum(nil)
+}
+
+// Generate a determistic number,based on the input
+func (privkey PrivateKey) GenerateDeterministicK(input string) string {
+	Order := "0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141"
+	OrderBig, _ := big.NewInt(0).SetString(Order[2:], 16)
+	z, _ := big.NewInt(0).SetString(input, 16)
+	if z.Cmp(OrderBig) == 1 {
+		z.Sub(z, OrderBig)
+	}
+	k := []byte{}
+	v := []byte{}
+	// Fill up the bytes
+	counter := 0
+	for counter < 32 {
+		k = append(k, byte(0))
+		v = append(v, byte(01))
+		counter++
+	}
+	zBytes, _ := hex.DecodeString(input)
+	// privkey secret is in a string... not even a hexadecimal string
+	secretBytes := utils.ToBigInt(privkey.DumpSecret()).Bytes()
+	// We want to pad it with 0 bytes until it reaches 32 bytes
+	for len(secretBytes) < 32 {
+		secretBytes = append([]byte{0x00}, secretBytes...)
+	}
+	var buf []byte
+
+	routes := [][]byte{
+		v,
+		[]byte{0x00},
+		secretBytes,
+		zBytes,
+	}
+	for _, route := range routes {
+		buf = append(buf, route...)
+	}
+	k = digest(k, buf)
+	v = digest(k, v)
+	buf = []byte{}
+	routes = [][]byte{
+		v,
+		[]byte{0x01},
+		secretBytes,
+		zBytes,
+	}
+	for _, route := range routes {
+		buf = append(buf, route...)
+	}
+	k = digest(k, buf)
+	v = digest(k, v)
+	for true {
+		v = digest(k, v)
+		candidate := big.NewInt(0).SetBytes(v)
+		if candidate.Cmp(big.NewInt(1)) == 1 && candidate.Cmp(OrderBig) == -1 {
+			return candidate.Text(16)
+		}
+		buf = []byte{}
+		routes = [][]byte{
+			v,
+			[]byte{0x00},
+		}
+		for _, route := range routes {
+			buf = append(buf, route...)
+		}
+		k = digest(k, buf)
+		v = digest(k, v)
+	}
+	return "s"
 }
 
 //Export will display the privatekey as WIF format
