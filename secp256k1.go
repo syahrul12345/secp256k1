@@ -19,13 +19,13 @@ func GetMainnetAddressFromPrivKey(secret string) string {
 	return point256.GetAddress(true, false)
 }
 
-//GetSec: Gets the SEC format of a public key, given a private key
+//GetSec : Gets the SEC format of a public key, given a private key
 func GetSec(secret string, compressed bool) string {
 	point256 := creepto.GetPublicKey(secret)
 	return point256.SEC(compressed)
 }
 
-//DecodeAddress: Decodes an address, and return the hashed sec string.
+//DecodeAddress : Decodes an address, and return the hashed sec string.
 func DecodeAddress(address string) string {
 	return utils.Decode58(address)
 }
@@ -36,18 +36,18 @@ func GetTestnetAddressFromPrivKey(secret string) string {
 	return point256.GetAddress(true, true)
 }
 
-//Signs a message given a privatekey
+//Sign : Signs a message given a privatekey
 func Sign(secret string, message string) (*creepto.Signature, string) {
 	privKeyObj := creepto.CreateNewPrivateKeyFromSecret(secret)
 	return privKeyObj.Sign(message)
 }
 
-//Parse the sec in the string format and return the corresponding point256
+//ParseSec : Parses the sec in the string format and return the corresponding point256
 func ParseSec(secPubKey string) *creepto.Point256 {
 	return creepto.ParseSec(secPubKey)
 }
 
-//Parse the derString and returns the unserialized Signature Object
+//ParseDer : Parses the derString and returns the unserialized Signature Object
 func ParseDer(derString string) *creepto.Signature {
 	return creepto.ParseDER(derString)
 }
@@ -57,4 +57,14 @@ func Verify(secPubKey string, der string, z string) (bool, error) {
 	point256 := creepto.ParseSec(secPubKey)
 	signature := creepto.ParseDER(der)
 	return point256.Verify(z, signature)
+}
+
+// H160ToP2PKH : Calculates the p2pkh address of a h160 string
+func H160ToP2PKH(h160 string, testnet bool) string {
+	return utils.H160ToP2PKH(h160, testnet)
+}
+
+//H160ToP2SH Converts a h160 to a p2sh address
+func H160ToP2SH(h160 string, testnet bool) string {
+	return utils.H160ToP2SH(h160, testnet)
 }

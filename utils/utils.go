@@ -108,3 +108,25 @@ func intToHexadecimal(integer string) string {
 	return "0x" + coefficientString
 
 }
+
+//H160ToP2PKH:  Converts a h160 to a p2pkh address
+func H160ToP2PKH(h160 string, testnet bool) string {
+	var prefix string
+	if testnet {
+		prefix = "6f"
+	} else {
+		prefix = "00"
+	}
+	return Encode58CheckSum(prefix + h160)
+}
+
+//H160ToP2SH Converts a h160 to a p2sh address
+func H160ToP2SH(h160 string, testnet bool) string {
+	var prefix string
+	if testnet {
+		prefix = "c4"
+	} else {
+		prefix = "05"
+	}
+	return Encode58CheckSum(prefix + h160)
+}
